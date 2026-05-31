@@ -18,7 +18,9 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-PORT = 8000
+import os
+
+PORT = int(os.environ.get("PORT", 8000))
 DB_PATH = Path(__file__).parent / "mira.db"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
