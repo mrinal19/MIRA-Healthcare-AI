@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MIRA – Medical Intelligence Robotic Automation</title>
+
+<!-- React + Babel via CDN (no build step needed) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<style>
+  /* ─── Design Tokens ─────────────────────────────────────────────────── */
+  :root {
+    --bg:       #0a0e1a;
+    --surface:  #111827;
+    --surface2: #1a2235;
+    --surface3: #1f2d42;
+    --border:   rgba(255,255,255,0.06);
+    --border2:  rgba(255,255,255,0.12);
+    --accent:   #00d4aa;
+    --accent2:  #0099ff;
+    --accent3:  #7c3aed;
+    --danger:   #ef4444;
+    --warn:     #f59e0b;
+    --success:  #22c55e;
+    --text:     #e2e8f0;
+    --text2:    #94a3b8;
+    --text3:    #475569;
+    --font:     'Space Grotesk', sans-serif;
+    --font-h:   'Syne', sans-serif;
+    --font-m:   'JetBrains Mono', monospace;
+    --radius:   12px;
+    --radius-lg:20px;
+    --shadow:   0 4px 24px rgba(0,0,0,0.4);
+    --glow:     0 0 20px rgba(0,212,170,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body, #root {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── Scrollbar ──────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ─── Layout ─────────────────────────────────────────────────────────── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ─── Sidebar ────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #00d4aa, #0099ff);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0a0e1a;
+    font-family: var(--font-h);
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+  .logo-text { font-family: var(--font-h); font-size: 20px; font-weight: 800; color: var(--text); }
+  .logo-sub  { font-size: 11px; color: var(--text3); letter-spacing: 0.5px; margin-top: 2px; }
+
+  .sidebar-nav { flex: 1; padding: 12px; overflow-y: auto; }
+  .nav-section { margin-bottom: 20px; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 12px 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover  { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(0,212,170,0.1); color: var(--accent); }
+  .nav-item .icon  { font-size: 16px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .ai-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    background: rgba(0,212,170,0.08);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .ai-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ─── Main Content ───────────────────────────────────────────────────── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ─── Header ─────────────────────────────────────────────────────────── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-title { font-family: var(--font-h); font-size: 18px; font-weight: 700; }
+  .header-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+
+  /* ─── Buttons ────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #00b890);
+    color: #0a0e1a;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,212,170,0.3); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* ─── Content Area ───────────────────────────────────────────────────── */
+  .content { flex: 1; overflow-y: auto; padding: 32px; }
+
+  /* ─── Stats Row ──────────────────────────────────────────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .stat-card.teal::before   { background: linear-gradient(90deg, var(--accent), transparent); }
+  .stat-card.blue::before   { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .stat-card.amber::before  { background: linear-gradient(90deg, var(--warn), transparent); }
+  .stat-value { font-family: var(--font-h); font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  /* ─── Search / Toolbar ───────────────────────────────────────────────── */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .search-wrap { position: relative; flex: 1; max-width: 400px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 9px 12px 9px 38px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+  .count-badge {
+    padding: 4px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--font-m);
+  }
+
+  /* ─── Table ──────────────────────────────────────────────────────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--surface2); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  .td-name { font-weight: 600; color: var(--text); }
+  .td-email { font-size: 12px; color: var(--text3); font-family: var(--font-m); }
+  .td-mono { font-family: var(--font-m); font-size: 13px; }
+  .td-remarks { max-width: 300px; font-size: 12px; color: var(--text2); }
+  .td-remarks-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ─── Status Pills ───────────────────────────────────────────────────── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .pill-normal  { background: rgba(34,197,94,0.1);  color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+  .pill-warn    { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+  .pill-danger  { background: rgba(239,68,68,0.1);  color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+
+  /* ─── Empty State ────────────────────────────────────────────────────── */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 40px;
+    color: var(--text3);
+    text-align: center;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty h3 { font-size: 16px; color: var(--text2); margin-bottom: 6px; font-family: var(--font-h); }
+  .empty p  { font-size: 13px; }
+
+  /* ─── Modal ──────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-family: var(--font-h); font-size: 18px; font-weight: 700; }
+  .modal-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .modal-close {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; border-radius: 6px;
+    color: var(--text3); cursor: pointer; font-size: 18px;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ─── Form ───────────────────────────────────────────────────────────── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input {
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); background: var(--surface3); box-shadow: 0 0 0 3px rgba(0,212,170,0.1); }
+  .form-input.error { border-color: var(--danger); }
+  .form-input::placeholder { color: var(--text3); }
+  .form-hint { font-size: 11px; color: var(--text3); }
+  .field-error { font-size: 11px; color: var(--danger); }
+
+  .blood-section {
+    margin-top: 4px;
+    padding: 16px;
+    background: rgba(0,212,170,0.04);
+    border: 1px solid rgba(0,212,170,0.1);
+    border-radius: 10px;
+  }
+  .blood-section-title { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+  /* ─── Errors Banner ──────────────────────────────────────────────────── */
+  .errors-banner {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--danger);
+  }
+  .errors-banner ul { margin: 6px 0 0 16px; }
+  .errors-banner li { margin-bottom: 2px; }
+
+  /* ─── Detail Modal ───────────────────────────────────────────────────── */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .detail-field { display: flex; flex-direction: column; gap: 4px; }
+  .detail-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-value { font-size: 14px; font-family: var(--font-m); color: var(--text); }
+  .remarks-box {
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: var(--text2);
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .remarks-label { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  /* ─── Delete Confirm ─────────────────────────────────────────────────── */
+  .delete-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
+  .delete-confirm { text-align: center; padding: 8px 0 20px; }
+  .delete-confirm h3 { font-family: var(--font-h); font-size: 18px; margin-bottom: 8px; }
+  .delete-confirm p  { font-size: 13px; color: var(--text2); }
+
+  /* ─── Loading / Spinner ──────────────────────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,14,26,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 2000;
+    gap: 16px;
+  }
+  .loading-text { color: var(--accent); font-size: 14px; font-weight: 600; }
+
+  /* ─── Toast ──────────────────────────────────────────────────────────── */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    animation: toastIn 0.2s ease;
+    max-width: 360px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .toast-success { background: rgba(34,197,94,0.15);  border: 1px solid rgba(34,197,94,0.3);  color: #22c55e; }
+  .toast-error   { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.3);  color: #ef4444; }
+  .toast-info    { background: rgba(0,153,255,0.15);  border: 1px solid rgba(0,153,255,0.3);  color: #60b4ff; }
+
+  /* ─── Action dots ────────────────────────────────────────────────────── */
+  .action-group { display: flex; align-items: center; gap: 6px; }
+
+  /* ─── Responsive ─────────────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .content { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback } = React;
+const API = 'http://localhost:8000/api';
+
+// helpers...
+// modals...
+// ONE App() function only
+
+ReactDOM.createRoot(
+  document.getElementById('root')
+).render(<App />);
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function classifyGlucose(v) {
+  if (v < 70)   return 'danger';
+  if (v < 100)  return 'normal';
+  if (v < 126)  return 'warn';
+  return 'danger';
+}
+function classifyHaem(v) {
+  if (v < 8)    return 'danger';
+  if (v < 12)   return 'warn';
+  if (v <= 17.5)return 'normal';
+  return 'warn';
+}
+function classifyChol(v) {
+  if (v < 200)  return 'normal';
+  if (v < 240)  return 'warn';
+  return 'danger';
+}
+
+function StatusPill({ type, value, unit }) {
+  const labels = { normal: 'Normal', warn: 'Borderline', danger: 'Abnormal' };
+  return (
+    <span className={`pill pill-${type}`}>
+      {value.toFixed(1)} {unit}
+      <span style={{opacity:0.7}}>· {labels[type]}</span>
+    </span>
+  );
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+function calcAge(dob) {
+  if (!dob) return '';
+  const diff = new Date() - new Date(dob);
+  return Math.floor(diff / (365.25 * 24 * 3600 * 1000)) + ' yrs';
+}
+
+// ─── Toast System ────────────────────────────────────────────────────────
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type='info') => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
+  }, []);
+  return [toasts, add];
+}
+
+function Toasts({ toasts }) {
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast toast-${t.type}`}>
+          {t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ'} {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Form Modal ───────────────────────────────────────────────────────────
+const EMPTY_FORM = { full_name:'', dob:'', email:'', glucose:'', haemoglobin:'', cholesterol:'' };
+
+function PatientFormModal({ patient, onClose, onSaved, toast }) {
+  const [form,   setForm]   = useState(patient ? { ...patient, dob: patient.dob?.substring(0,10) } : EMPTY_FORM);
+  const [errors, setErrors] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const isEdit = !!patient?.id;
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function submit() {
+    setSaving(true);
+    setErrors([]);
+    try {
+      const method = isEdit ? 'PUT' : 'POST';
+      const url    = isEdit ? `${API}/patients/${patient.id}` : `${API}/patients`;
+      const res    = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (data.error) {
+        setErrors(Array.isArray(data.error) ? data.error : [data.error]);
+      } else {
+        toast(isEdit ? 'Patient updated successfully' : 'Patient added & AI analysis complete', 'success');
+        onSaved(data.patient);
+      }
+    } catch {
+      setErrors(['Network error — is the backend running?']);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">{isEdit ? 'Edit Patient' : 'Add New Patient'}</div>
+            <div className="modal-subtitle">
+              {isEdit ? 'Update record and re-run AI analysis' : 'Fill in details — AI will analyse blood results automatically'}
+            </div>
+          </div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          {errors.length > 0 && (
+            <div className="errors-banner">
+              <strong>Please fix the following:</strong>
+              <ul>{errors.map((e,i) => <li key={i}>{e}</li>)}</ul>
+            </div>
+          )}
+
+          <div className="form-grid">
+            <div className="form-group full">
+              <label>Full Name</label>
+              <input className={`form-input ${errors.some(e=>e.includes('full_name'))?'error':''}`}
+                placeholder="e.g. Priya Sharma"
+                value={form.full_name}
+                onChange={e => set('full_name', e.target.value)} />
+            </div>
+
+            <div className="form-group">
+              <label>Date of Birth</label>
+              <input className="form-input" type="date"
+                max={new Date().toISOString().substring(0,10)}
+                value={form.dob}
+                onChange={e => set('dob', e.target.value)} />
+            </div>
+
+            <div className="form-group">
+              <label>Email Address</label>
+              <input className="form-input" type="email"
+                placeholder="patient@example.com"
+                value={form.email}
+                onChange={e => set('email', e.target.value)} />
+            </div>
+          </div>
+
+          <div className="blood-section" style={{marginTop:20}}>
+            <div className="blood-section-title">🩸 Blood Test Results</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Glucose (mg/dL)</label>
+                <input className="form-input" type="number" step="0.1" min="0"
+                  placeholder="Normal: 70–99"
+                  value={form.glucose}
+                  onChange={e => set('glucose', e.target.value)} />
+                <span className="form-hint">Fasting: 70–99 mg/dL</span>
+              </div>
+              <div className="form-group">
+                <label>Haemoglobin (g/dL)</label>
+                <input className="form-input" type="number" step="0.1" min="0"
+                  placeholder="Normal: 12–17.5"
+                  value={form.haemoglobin}
+                  onChange={e => set('haemoglobin', e.target.value)} />
+                <span className="form-hint">M: 13.5–17.5 / F: 12–15.5</span>
+              </div>
+              <div className="form-group">
+                <label>Cholesterol (mg/dL)</label>
+                <input className="form-input" type="number" step="0.1" min="0"
+                  placeholder="Desirable: <200"
+                  value={form.cholesterol}
+                  onChange={e => set('cholesterol', e.target.value)} />
+                <span className="form-hint">Desirable: &lt;200 mg/dL</span>
+              </div>
+              <div className="form-group" style={{alignSelf:'center'}}>
+                <div style={{padding:'12px', background:'rgba(0,212,170,0.06)', borderRadius:8, fontSize:12, color:'var(--text3)'}}>
+                  <span style={{color:'var(--accent)'}}>✦ MIRA AI</span> will automatically<br/>
+                  analyse these values and generate<br/>a clinical risk assessment.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit} disabled={saving}>
+            {saving ? <><span className="spinner"/> Analysing...</> : (isEdit ? '💾 Update & Re-analyse' : '✦ Add & Analyse')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Detail Modal ──────────────────────────────────────────────────────────
+function PatientDetailModal({ patient, onClose, onEdit, onDelete }) {
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">{patient.full_name}</div>
+            <div className="modal-subtitle">{patient.email} · {calcAge(patient.dob)}</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          <div className="detail-grid">
+            <div className="detail-field">
+              <div className="detail-label">Date of Birth</div>
+              <div className="detail-value">{formatDate(patient.dob)}</div>
+            </div>
+            <div className="detail-field">
+              <div className="detail-label">Age</div>
+              <div className="detail-value">{calcAge(patient.dob)}</div>
+            </div>
+            <div className="detail-field">
+              <div className="detail-label">Email</div>
+              <div className="detail-value" style={{fontSize:13}}>{patient.email}</div>
+            </div>
+            <div className="detail-field">
+              <div className="detail-label">Record ID</div>
+              <div className="detail-value">#{patient.id}</div>
+            </div>
+          </div>
+
+          <div className="blood-section" style={{marginBottom:20}}>
+            <div className="blood-section-title">Blood Test Results</div>
+            <div style={{display:'flex', flexDirection:'column', gap:10}}>
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                <span style={{color:'var(--text2)', fontSize:13}}>Glucose</span>
+                <StatusPill type={classifyGlucose(patient.glucose)} value={patient.glucose} unit="mg/dL"/>
+              </div>
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                <span style={{color:'var(--text2)', fontSize:13}}>Haemoglobin</span>
+                <StatusPill type={classifyHaem(patient.haemoglobin)} value={patient.haemoglobin} unit="g/dL"/>
+              </div>
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                <span style={{color:'var(--text2)', fontSize:13}}>Cholesterol</span>
+                <StatusPill type={classifyChol(patient.cholesterol)} value={patient.cholesterol} unit="mg/dL"/>
+              </div>
+            </div>
+          </div>
+
+          <div className="remarks-label">✦ MIRA AI Clinical Assessment</div>
+          <div className="remarks-box">
+            {patient.remarks || <span style={{color:'var(--text3)', fontStyle:'italic'}}>No AI analysis available.</span>}
+          </div>
+
+          <div style={{fontSize:11, color:'var(--text3)', marginTop:10}}>
+            Created: {patient.created_at} · Updated: {patient.updated_at}
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-danger btn-sm" onClick={() => { onClose(); onDelete(patient); }}>
+            🗑 Delete
+          </button>
+          <div style={{flex:1}}/>
+          <button className="btn btn-ghost" onClick={onClose}>Close</button>
+          <button className="btn btn-primary btn-sm" onClick={() => { onClose(); onEdit(patient); }}>
+            ✏️ Edit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Confirm Modal ──────────────────────────────────────────────────
+function DeleteModal({ patient, onClose, onConfirm, toast }) {
+  const [loading, setLoading] = useState(false);
+
+  async function confirm() {
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API}/patients/${patient.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.deleted) {
+        toast('Patient record deleted', 'success');
+        onConfirm(patient.id);
+      } else {
+        toast('Delete failed', 'error');
+        onClose();
+      }
+    } catch {
+      toast('Network error', 'error');
+      onClose();
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{maxWidth:420}}>
+        <div className="modal-header">
+          <div className="modal-title">Confirm Deletion</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body delete-confirm">
+          <div className="delete-icon">🗑️</div>
+          <h3>Delete {patient.full_name}?</h3>
+          <p>This will permanently remove the patient record and all associated data. This action cannot be undone.</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger" onClick={confirm} disabled={loading}>
+            {loading ? <><span className="spinner"/> Deleting...</> : '🗑 Yes, Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main App ──────────────────────────────────────────────────────────────
+function App() {
+  const [patients, setPatients] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
+  const [modal,    setModal]    = useState(null); // 'add' | 'edit' | 'detail' | 'delete'
+  const [selected, setSelected] = useState(null);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [toasts, toast]         = useToast();
+  const searchTimer              = useRef(null);
+
+  async function fetchPatients(q='') {
+    try {
+      const res  = await fetch(`${API}/patients${q ? `?search=${encodeURIComponent(q)}` : ''}`);
+      const data = await res.json();
+      setPatients(data.patients || []);
+    } catch {
+      toast('Cannot reach backend — start the server!', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function checkHealth() {
+    try {
+      const res  = await fetch(`${API}/health`);
+      const data = await res.json();
+      setAiEnabled(data.ai_enabled);
+    } catch {}
+  }
+
+  useEffect(() => { fetchPatients(); checkHealth(); }, []);
+
+  function onSearch(v) {
+    setSearch(v);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => fetchPatients(v), 300);
+  }
+
+  function handleSaved(patient) {
+    setPatients(prev => {
+      const idx = prev.findIndex(p => p.id === patient.id);
+      if (idx >= 0) { const n = [...prev]; n[idx] = patient; return n; }
+      return [patient, ...prev];
+    });
+    setModal(null);
+  }
+
+  function handleDeleted(id) {
+    setPatients(prev => prev.filter(p => p.id !== id));
+    setModal(null);
+    setSelected(null);
+  }
+
+  // ── Stats ──
+  const total    = patients.length;
+  const abnormal = patients.filter(p =>
+    classifyGlucose(p.glucose) !== 'normal' ||
+    classifyHaem(p.haemoglobin) !== 'normal' ||
+    classifyChol(p.cholesterol) !== 'normal'
+  ).length;
+  const avgGlucose = total > 0 ? (patients.reduce((s,p)=>s+p.glucose,0)/total).toFixed(1) : '—';
+  const avgChol    = total > 0 ? (patients.reduce((s,p)=>s+p.cholesterol,0)/total).toFixed(1) : '—';
+
+  return (
+    <div className="app">
+      {/* ── Sidebar ── */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <div className="logo-badge">
+            <div className="logo-icon">M</div>
+            <div className="logo-text">MIRA</div>
+          </div>
+          <div className="logo-sub">Medical Intelligence Robotic Automation</div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="nav-section">
+            <div className="nav-label">Platform</div>
+            <div className="nav-item active">
+              <span className="icon">🏥</span> Patients
+            </div>
+            <div className="nav-item" onClick={() => toast('Analytics module coming soon', 'info')}>
+              <span className="icon">📊</span> Analytics
+            </div>
+            <div className="nav-item" onClick={() => toast('Reports module coming soon', 'info')}>
+              <span className="icon">📋</span> Reports
+            </div>
+          </div>
+          <div className="nav-section">
+            <div className="nav-label">System</div>
+            <div className="nav-item" onClick={() => toast('Settings module coming soon', 'info')}>
+              <span className="icon">⚙️</span> Settings
+            </div>
+          </div>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="ai-badge">
+            <div className="ai-dot"/>
+            {aiEnabled ? 'Claude AI Active' : 'Rule-based Mode'}
+          </div>
+          <div style={{marginTop:8, fontSize:10, color:'var(--text3)'}}>
+            v1.0.0 · Task 1 Submission
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <div className="main">
+        <header className="header">
+          <div>
+            <div className="header-title">Patient Records</div>
+            <div className="header-subtitle">Manage and analyse patient blood test data with AI insights</div>
+          </div>
+          <div className="header-actions">
+            <button className="btn btn-ghost btn-sm" onClick={() => { setLoading(true); fetchPatients(search); }}>
+              ↻ Refresh
+            </button>
+            <button className="btn btn-primary" onClick={() => setModal('add')}>
+              + Add Patient
+            </button>
+          </div>
+        </header>
+
+        <div className="content">
+          {/* Stats */}
+          <div className="stats-row">
+            <div className="stat-card teal">
+              <div className="stat-value">{total}</div>
+              <div className="stat-label">Total Patients</div>
+            </div>
+            <div className="stat-card blue">
+              <div className="stat-value" style={{color:'var(--accent2)'}}>{abnormal}</div>
+              <div className="stat-label">Needs Attention</div>
+            </div>
+            <div className="stat-card purple">
+              <div className="stat-value" style={{color:'var(--accent3)'}}>{avgGlucose}</div>
+              <div className="stat-label">Avg Glucose mg/dL</div>
+            </div>
+            <div className="stat-card amber">
+              <div className="stat-value" style={{color:'var(--warn)'}}>{avgChol}</div>
+              <div className="stat-label">Avg Cholesterol mg/dL</div>
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="toolbar">
+            <div className="search-wrap">
+              <span className="search-icon">🔍</span>
+              <input
+                className="search-input"
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={e => onSearch(e.target.value)}
+              />
+            </div>
+            <div className="count-badge">{patients.length} records</div>
+          </div>
+
+          {/* Table */}
+          {loading ? (
+            <div className="empty">
+              <div className="empty-icon"><span className="spinner" style={{width:40,height:40,borderWidth:3}}/></div>
+              <h3>Loading patients...</h3>
+            </div>
+          ) : patients.length === 0 ? (
+            <div className="table-wrap">
+              <div className="empty">
+                <div className="empty-icon">🏥</div>
+                <h3>{search ? 'No results found' : 'No patients yet'}</h3>
+                <p>{search ? 'Try a different search term' : 'Add your first patient to get started'}</p>
+                {!search && (
+                  <button className="btn btn-primary" style={{marginTop:20}} onClick={() => setModal('add')}>
+                    + Add First Patient
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Patient</th>
+                    <th>DOB / Age</th>
+                    <th>Glucose</th>
+                    <th>Haemoglobin</th>
+                    <th>Cholesterol</th>
+                    <th>AI Remarks</th>
+                    <th style={{width:120}}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {patients.map((p, i) => (
+                    <tr key={p.id} style={{cursor:'pointer'}} onClick={() => { setSelected(p); setModal('detail'); }}>
+                      <td className="td-mono" style={{color:'var(--text3)', fontSize:12}}>{p.id}</td>
+                      <td>
+                        <div className="td-name">{p.full_name}</div>
+                        <div className="td-email">{p.email}</div>
+                      </td>
+                      <td>
+                        <div className="td-mono" style={{fontSize:12}}>{formatDate(p.dob)}</div>
+                        <div style={{fontSize:11, color:'var(--text3)'}}>{calcAge(p.dob)}</div>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <StatusPill type={classifyGlucose(p.glucose)} value={p.glucose} unit="mg/dL"/>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <StatusPill type={classifyHaem(p.haemoglobin)} value={p.haemoglobin} unit="g/dL"/>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <StatusPill type={classifyChol(p.cholesterol)} value={p.cholesterol} unit="mg/dL"/>
+                      </td>
+                      <td className="td-remarks">
+                        <div className="td-remarks-text">{p.remarks || <span style={{color:'var(--text3)'}}>—</span>}</div>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <div className="action-group">
+                          <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(p); setModal('edit'); }}>✏️</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => { setSelected(p); setModal('delete'); }}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Modals ── */}
+      {modal === 'add'    && <PatientFormModal patient={null}     onClose={() => setModal(null)} onSaved={handleSaved} toast={toast}/>}
+      {modal === 'edit'   && <PatientFormModal patient={selected} onClose={() => setModal(null)} onSaved={handleSaved} toast={toast}/>}
+      {modal === 'detail' && selected && <PatientDetailModal patient={selected} onClose={() => setModal(null)}
+        onEdit={p => { setSelected(p); setModal('edit'); }} onDelete={p => { setSelected(p); setModal('delete'); }} />}
+      {modal === 'delete' && selected && <DeleteModal patient={selected} onClose={() => setModal(null)} onConfirm={handleDeleted} toast={toast}/>}
+
+      <Toasts toasts={toasts}/>
+    </div>
+  );
+}
+
+</script>
+</body>
+</html>
